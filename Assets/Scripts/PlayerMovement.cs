@@ -130,7 +130,7 @@ public class PlayerMovement : MonoBehaviour
         // Confirm buttons still being pressed
         if(x != 0 || y != 0)
         {
-            yield return StartCoroutine(GridMove(new Vector3(x,y,0).normalized * gridSize));
+            yield return StartCoroutine(GridMove(new Vector3(x,y,0) * gridSize));
         }
         else
         {
@@ -154,13 +154,21 @@ public class PlayerMovement : MonoBehaviour
             originalPos = transform.position;
             targetPos = originalPos + direction;
 
+            float finalSpeed = moveSpeed;
+
+            // Slow down move speed for diagonal movement
+            if(direction.x != 0f && direction.y != 0f)
+            {
+                finalSpeed /= (float)Math.Sqrt(2f);
+            }
+
             // Interpolate position between the 2 points
             while(elapsedTime < 1f)
             {
                 transform.position = Vector3.Lerp(originalPos, targetPos, elapsedTime);
 
                 // Update elapsed time and run in the background
-                elapsedTime += Time.deltaTime * moveSpeed;
+                elapsedTime += Time.deltaTime * finalSpeed;
                 yield return null;
             }
 
@@ -175,7 +183,7 @@ public class PlayerMovement : MonoBehaviour
             if(x != 0 || y != 0)
             {
                 // Update direction
-                direction = new Vector3(x,y,0).normalized * gridSize;
+                direction = new Vector3(x,y,0) * gridSize;
             }
             else
             {
