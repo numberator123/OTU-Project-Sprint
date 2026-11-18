@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     private Animator anim;
+    private SpriteRenderer spriteRenderer;
 
     // Movement vectors
     private float x, y;
@@ -29,6 +30,8 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         anim = GetComponent<Animator>();
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -50,6 +53,9 @@ public class PlayerMovement : MonoBehaviour
         // If an input is pressed
         if(x != 0 || y != 0)
         {
+            // Update visual direction immediately
+            UpdateAnimationDirection(x,y);
+
             // Start walking if an input is pressed
             if(!isWalking)
             {
@@ -87,12 +93,31 @@ public class PlayerMovement : MonoBehaviour
         return 0f;
     }
 
-    // Free movement
-    private void Move()
+    // Update the direction of the player visually
+    private void UpdateAnimationDirection(float x, float y)
     {
-        // Set the direction values for the animation
+        // Update direction values for animation to know what to play
         anim.SetFloat("X", x);
         anim.SetFloat("Y", y);
+
+        // Assuming sprites face right
+        if(x < 0)
+        {
+            // Flip for facing left
+            spriteRenderer.flipX = true;
+        }
+        else if(x > 0)
+        {
+            // No flip for facing right
+            spriteRenderer.flipX = false;
+        }
+    }
+
+    // Free movement (deprecated)
+    private void Move()
+    {
+        // Update direction visually
+        UpdateAnimationDirection(x,y);
 
         transform.Translate(new Vector3(x, y, 0) * Time.deltaTime * moveSpeed);
     }
@@ -145,9 +170,8 @@ public class PlayerMovement : MonoBehaviour
     {
         while(direction != Vector3.zero)
         {
-            // Set the direction values for the animation
-            anim.SetFloat("X", x);
-            anim.SetFloat("Y", y);
+            // Update direction visually
+            UpdateAnimationDirection(x,y);
 
             // Use elapsedTime to update position
             float elapsedTime = 0f;
