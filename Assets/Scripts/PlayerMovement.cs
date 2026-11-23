@@ -61,17 +61,20 @@ public class PlayerMovement : MonoBehaviour
             // Update visual direction immediately
             UpdateAnimationDirection(x,y);
 
-            // Start walking if an input is pressed
-            if(!isWalking)
+            // get the target position for the animation
+            Vector3 targetPosition = transform.position + new Vector3(x, y, 0) * gridSize;
+            if(canWalk(targetPosition))
             {
-                isWalking = true;
-                anim.SetBool("isWalking", isWalking);
+                // Start walking if an input is pressed and
+                if (!isWalking)
+                {
+                    isWalking = true;
+                    anim.SetBool("isWalking", isWalking);
+                }
+
+                // Start buffer window
+                StartCoroutine(BufferInputWindow(x, y));
             }
-
-            // Start buffer window
-            StartCoroutine(BufferInputWindow(x,y));
-
-            //Move()
         }
         // If no inputs are pressed
         else if(isWalking)
@@ -191,6 +194,10 @@ public class PlayerMovement : MonoBehaviour
             // Check collision
             if (!canWalk(targetPos))
             {
+                // Stop walking animation
+                isWalking = false;
+                anim.SetBool("isWalking", isWalking);
+                
                 break;
             }
 
