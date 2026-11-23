@@ -38243,6 +38243,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   interactText: {fileID: 1439859649}
   dialogueScript: {fileID: 555790439}
+  data: {fileID: 11400000, guid: e025a684e9fc424eac9d93e41d2a5157, type: 2}
 --- !u!212 &1883297665
 SpriteRenderer:
   serializedVersion: 3
