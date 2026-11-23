@@ -38,16 +38,7 @@ public class Dialogue : MonoBehaviour
     {
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            
-            if (dialogueTextBox.text == lines[index])
-            {
-                nextLine();
-            }
-            else
-            {
-                StopAllCoroutines();
-                dialogueTextBox.text = lines[index];
-            }
+            AdvanceDialogue();
         }
     }
 
@@ -75,6 +66,19 @@ public class Dialogue : MonoBehaviour
         else
         {
             gameObject.SetActive(false);
+        }
+    }
+
+    public void AdvanceDialogue()
+    {
+        if (dialogueTextBox.text == lines[index])
+        {
+            nextLine();
+        }
+        else
+        {
+            StopAllCoroutines();
+            dialogueTextBox.text = lines[index];
         }
     }
 }
