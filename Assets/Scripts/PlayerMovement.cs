@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +8,10 @@ public class PlayerMovement : MonoBehaviour
 {
     private Animator anim;
     private SpriteRenderer spriteRenderer;
+
+    // Collision settings
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float checkRadius = 0.2f;
 
     // Movement vectors
     private float x, y;
@@ -93,6 +98,12 @@ public class PlayerMovement : MonoBehaviour
         return 0f;
     }
 
+    private bool canWalk(Vector3 targetPosition)
+    {
+        // Return whether the tile can be walked on
+        return Physics2D.OverlapCircle(targetPosition, checkRadius, obstacleLayer) == null;
+    }
+
     // Update the direction of the player visually
     private void UpdateAnimationDirection(float x, float y)
     {
@@ -173,11 +184,18 @@ public class PlayerMovement : MonoBehaviour
             // Update direction visually
             UpdateAnimationDirection(x,y);
 
-            // Use elapsedTime to update position
-            float elapsedTime = 0f;
+            // Get target position
             originalPos = transform.position;
             targetPos = originalPos + direction;
 
+            // Check collision
+            if (!canWalk(targetPos))
+            {
+                break;
+            }
+
+            // Use elapsedTime to update position
+            float elapsedTime = 0f;
             float finalSpeed = moveSpeed;
 
             // Slow down move speed for diagonal movement
@@ -220,5 +238,13 @@ public class PlayerMovement : MonoBehaviour
         isMoving = false;
         isWalking = false;
         anim.SetBool("isWalking", isWalking);
+    }
+    
+    // For debugging player hitbox, comment out
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Vector3 checkPos = Application.isPlaying && targetPos != Vector3.zero ? targetPos : transform.position;
+        Gizmos.DrawWireSphere(checkPos, checkRadius);
     }
 }
