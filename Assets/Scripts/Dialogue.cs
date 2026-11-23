@@ -10,24 +10,38 @@ public class Dialogue : MonoBehaviour
 
 {
     public TextMeshProUGUI dialogueTextBox;
+    // Optional: shows the speaker's name. Kept out of dialogueTextBox because Update compares that text to lines[index].
+    public TextMeshProUGUI nameText;
     public List<string> lines;
     public float textSpeed;
     public int index;
+
+    public bool IsOpen => gameObject.activeSelf;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         gameObject.SetActive(false);
     }
 
-    public void TriggerDialogue()
+    public void TriggerDialogue(List<string> newLines, string speaker)
     {
+        if (newLines == null || newLines.Count == 0)
+        {
+            return;
+        }
+
         StopAllCoroutines();
         gameObject.SetActive(true);
-        lines.Clear();
-        dialogueTextBox.text = string.Empty;
-        lines.Add("Hi! I am an NPC, I can speak now");
-        lines.Add("This is another line!");
 
+        // Copy so clearing or editing these lines never touches the NPC's data asset
+        lines = new List<string>(newLines);
+        dialogueTextBox.text = string.Empty;
+
+        if (nameText != null)
+        {
+            nameText.text = speaker;
+        }
 
         index = 0;
         StartDialogue();
