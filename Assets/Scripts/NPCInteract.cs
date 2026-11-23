@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class NPCInteract : MonoBehaviour
 {
     bool playerInRange = false;
+
     public TMP_Text interactText;
 
     public Dialogue dialogueScript;
@@ -21,13 +22,24 @@ public class NPCInteract : MonoBehaviour
     {
         if(playerInRange && Keyboard.current.eKey.wasPressedThisFrame)
         {
-            dialogueScript.TriggerDialogue();
+            if(!dialogueScript.gameObject.activeInHierarchy)
+            {
+                // Remove E temporarily
+                interactText.text = "";
+
+                // Start dialogue
+                dialogueScript.TriggerDialogue();
+            }
+            else
+            {
+                dialogueScript.AdvanceDialogue();
+            }
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // added tag to Solider component to make this work
+        // Added tag to Soldier component to make this work
         if(collision.CompareTag("Player"))
         {
             interactText.text = "E";
@@ -38,12 +50,15 @@ public class NPCInteract : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        // added tag to Solider component to make this work
+        // Added tag to Soldier component to make this work
         if(collision.CompareTag("Player"))
         {
             interactText.text = "";
             playerInRange = false;
             Debug.Log("player exited collider");
+
+            // Close dialogue if open
+            dialogueScript.gameObject.SetActive(false);
         }
     }
 }
