@@ -162,4 +162,17 @@ public class Dialogue : MonoBehaviour
         dialogueTextBox.text = string.Empty;
         StartDialogue();
     }
+
+    public void AdvanceDialogue()
+    {
+        if (dialogueTextBox.text == lines[index])
+        {
+            nextLine();
+        }
+        else
+        {
+            StopAllCoroutines();
+            dialogueTextBox.text = lines[index];
+        }
+    }
 }

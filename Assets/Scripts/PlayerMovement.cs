@@ -1,11 +1,17 @@
 using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     private Animator anim;
+    private SpriteRenderer spriteRenderer;
+
+    // Collision settings
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float checkRadius = 0.2f;
 
     // Movement vectors
     private float x, y;
@@ -29,6 +35,8 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         anim = GetComponent<Animator>();
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -50,17 +58,23 @@ public class PlayerMovement : MonoBehaviour
         // If an input is pressed
         if(x != 0 || y != 0)
         {
-            // Start walking if an input is pressed
-            if(!isWalking)
+            // Update visual direction immediately
+            UpdateAnimationDirection(x,y);
+
+            // get the target position for the animation
+            Vector3 targetPosition = transform.position + new Vector3(x, y, 0) * gridSize;
+            if(canWalk(targetPosition))
             {
-                isWalking = true;
-                anim.SetBool("isWalking", isWalking);
+                // Start walking if an input is pressed and
+                if (!isWalking)
+                {
+                    isWalking = true;
+                    anim.SetBool("isWalking", isWalking);
+                }
+
+                // Start buffer window
+                StartCoroutine(BufferInputWindow(x, y));
             }
-
-            // Start buffer window
-            StartCoroutine(BufferInputWindow(x,y));
-
-            //Move()
         }
         // If no inputs are pressed
         else if(isWalking)
@@ -87,12 +101,37 @@ public class PlayerMovement : MonoBehaviour
         return 0f;
     }
 
-    // Free movement
-    private void Move()
+    private bool canWalk(Vector3 targetPosition)
     {
-        // Set the direction values for the animation
+        // Return whether the tile can be walked on
+        return Physics2D.OverlapCircle(targetPosition, checkRadius, obstacleLayer) == null;
+    }
+
+    // Update the direction of the player visually
+    private void UpdateAnimationDirection(float x, float y)
+    {
+        // Update direction values for animation to know what to play
         anim.SetFloat("X", x);
         anim.SetFloat("Y", y);
+
+        // Assuming sprites face right
+        if(x < 0)
+        {
+            // Flip for facing left
+            spriteRenderer.flipX = true;
+        }
+        else if(x > 0)
+        {
+            // No flip for facing right
+            spriteRenderer.flipX = false;
+        }
+    }
+
+    // Free movement (deprecated)
+    private void Move()
+    {
+        // Update direction visually
+        UpdateAnimationDirection(x,y);
 
         transform.Translate(new Vector3(x, y, 0) * Time.deltaTime * moveSpeed);
     }
@@ -130,7 +169,7 @@ public class PlayerMovement : MonoBehaviour
         // Confirm buttons still being pressed
         if(x != 0 || y != 0)
         {
-            yield return StartCoroutine(GridMove(new Vector3(x,y,0).normalized * gridSize));
+            yield return StartCoroutine(GridMove(new Vector3(x,y,0) * gridSize));
         }
         else
         {
@@ -145,14 +184,32 @@ public class PlayerMovement : MonoBehaviour
     {
         while(direction != Vector3.zero)
         {
-            // Set the direction values for the animation
-            anim.SetFloat("X", x);
-            anim.SetFloat("Y", y);
+            // Update direction visually
+            UpdateAnimationDirection(x,y);
+
+            // Get target position
+            originalPos = transform.position;
+            targetPos = originalPos + direction;
+
+            // Check collision
+            if (!canWalk(targetPos))
+            {
+                // Stop walking animation
+                isWalking = false;
+                anim.SetBool("isWalking", isWalking);
+                
+                break;
+            }
 
             // Use elapsedTime to update position
             float elapsedTime = 0f;
-            originalPos = transform.position;
-            targetPos = originalPos + direction;
+            float finalSpeed = moveSpeed;
+
+            // Slow down move speed for diagonal movement
+            if(direction.x != 0f && direction.y != 0f)
+            {
+                finalSpeed /= (float)Math.Sqrt(2f);
+            }
 
             // Interpolate position between the 2 points
             while(elapsedTime < 1f)
@@ -160,7 +217,7 @@ public class PlayerMovement : MonoBehaviour
                 transform.position = Vector3.Lerp(originalPos, targetPos, elapsedTime);
 
                 // Update elapsed time and run in the background
-                elapsedTime += Time.deltaTime * moveSpeed;
+                elapsedTime += Time.deltaTime * finalSpeed;
                 yield return null;
             }
 
@@ -175,7 +232,7 @@ public class PlayerMovement : MonoBehaviour
             if(x != 0 || y != 0)
             {
                 // Update direction
-                direction = new Vector3(x,y,0).normalized * gridSize;
+                direction = new Vector3(x,y,0) * gridSize;
             }
             else
             {
@@ -188,5 +245,13 @@ public class PlayerMovement : MonoBehaviour
         isMoving = false;
         isWalking = false;
         anim.SetBool("isWalking", isWalking);
+    }
+    
+    // For debugging player hitbox, comment out
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Vector3 checkPos = Application.isPlaying && targetPos != Vector3.zero ? targetPos : transform.position;
+        Gizmos.DrawWireSphere(checkPos, checkRadius);
     }
 }

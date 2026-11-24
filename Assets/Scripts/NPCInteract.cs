@@ -7,6 +7,7 @@ using System.Collections;
 public class NPCInteract : MonoBehaviour
 {
     bool playerInRange = false;
+
     public TMP_Text interactText;
     private string backendURL = "http://localhost:5000/api/message";
     public Dialogue dialogueScript;
@@ -55,8 +56,26 @@ public class NPCInteract : MonoBehaviour
         // Only trigger dialogue with 'E' if the dialogue box isn't already open
         if (playerInRange && !dialogueScript.gameObject.activeInHierarchy && Keyboard.current.eKey.wasPressedThisFrame)
         {
-            dialogueScript.TriggerDialogue();
+            if(!dialogueScript.gameObject.activeInHierarchy)
+            {
+                // Remove E temporarily
+                interactText.text = "";
+
+                // Start dialogue
+                dialogueScript.TriggerDialogue();
+            }
+            else
+            {
+                dialogueScript.AdvanceDialogue();
+            }
         }
+    }
+
+    [System.Serializable]
+    public class MessageRequest
+    {
+        public string message;
+        public MessageRequest(string message) { this.message = message; }
     }
 
     [System.Serializable]

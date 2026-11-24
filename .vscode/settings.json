@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "OTU-Project-Sprint.slnx"
+    "dotnet.defaultSolution": "OTU Project Sprint.slnx"
 }
