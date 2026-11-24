@@ -1,26 +1,60 @@
+using TMPro;
 using UnityEngine;
-using TMPro; // for adding text to screen above NPC
+using UnityEngine.Networking;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class NPCInteract : MonoBehaviour
 {
     bool playerInRange = false;
 
     public TMP_Text interactText;
-
+    private string backendURL = "http://localhost:5000/api/message";
     public Dialogue dialogueScript;
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        // Subscribe to the Enter-key submit event from Dialogue.cs
+        dialogueScript.onPlayerSubmit += SendMessageToBackend;
     }
 
-    // Update is called once per frame
+    void SendMessageToBackend(string playerInput)
+    {
+        Debug.Log("Player typed: " + playerInput);
+        StartCoroutine(PostMessage(playerInput));
+    }
+
+    IEnumerator PostMessage(string message)
+    {
+        string json = JsonUtility.ToJson(new MessageRequest(message));
+
+        using (UnityWebRequest request = new UnityWebRequest(backendURL, "POST"))
+        {
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+            request.uploadHandler = new UploadHandlerRaw(body);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Backend response: " + request.downloadHandler.text);
+                // Show the AI's reply in the dialogue box
+                dialogueScript.DisplayNPCReply(request.downloadHandler.text);
+            }
+            else
+            {
+                Debug.LogError("Backend error: " + request.error);
+                dialogueScript.DisplayNPCReply("Sorry, I couldn't connect to my brain.");
+            }
+        }
+    }
+
     void Update()
     {
-        if(playerInRange && Keyboard.current.eKey.wasPressedThisFrame)
+        // Only trigger dialogue with 'E' if the dialogue box isn't already open
+        if (playerInRange && !dialogueScript.gameObject.activeInHierarchy && Keyboard.current.eKey.wasPressedThisFrame)
         {
             if(!dialogueScript.gameObject.activeInHierarchy)
             {
@@ -37,28 +71,28 @@ public class NPCInteract : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public class MessageRequest
+    {
+        public string message;
+        public MessageRequest(string message) { this.message = message; }
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Added tag to Soldier component to make this work
-        if(collision.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
         {
             interactText.text = "E";
             playerInRange = true;
-            Debug.Log("player in collider");
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        // Added tag to Soldier component to make this work
-        if(collision.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
         {
             interactText.text = "";
             playerInRange = false;
-            Debug.Log("player exited collider");
-
-            // Close dialogue if open
-            dialogueScript.gameObject.SetActive(false);
         }
     }
 }
