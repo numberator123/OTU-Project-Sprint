@@ -78,13 +78,6 @@ public class NPCInteract : MonoBehaviour
         public MessageRequest(string message) { this.message = message; }
     }
 
-    [System.Serializable]
-    public class MessageRequest
-    {
-        public string message;
-        public MessageRequest(string message) { this.message = message; }
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
